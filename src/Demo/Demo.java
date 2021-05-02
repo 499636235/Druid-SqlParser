@@ -18,10 +18,16 @@ import java.util.*;
 
 
 public class Demo {
+
+
     public static void main(String[] args) throws Exception {
 
-
-        // sql文件路径，请自己填写
+        /**
+         * sql文件路径，请自己填写
+         * 目前已知BUG：'UNION ALL' 的前后最好补上空格，否则解析时容易报错
+         *
+         *
+         */
         File file = new File("/Users/njy/Documents/zkr/新数据中台/快速报表sql/test1.sql");
 
 
@@ -66,6 +72,8 @@ public class Demo {
      * @return
      */
     private static void getTableAndColumnBySql(String sql, String dbType) {
+        // 格式化sql
+//        sql = SQLUtils.format(sql, dbType);
         // 解析sql，生成 AST(抽象语法树)
         List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
         if (CollectionUtils.isEmpty(stmtList)) {
