@@ -103,7 +103,22 @@ public class Demo {
             Set set = map.keySet();
             System.out.println();
             for (Object o : set) {
-                System.out.println(o + ":" + map.get(o));
+
+                /**
+                 * 格式：LIS.LDCODE	CODENAME	CODE	CODETYPE
+                 */
+                System.out.print(o);
+                for (String co : map.get(o)) {
+                    System.out.print("\t" + co);
+                }
+                System.out.println();
+
+
+                /**
+                 * 格式：LIS.LDCODE:[CODENAME, CODE, CODETYPE]
+                 */
+//                System.out.println(o + ":" + map.get(o));
+
             }
             System.out.println();
         }
