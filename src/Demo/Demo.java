@@ -28,7 +28,7 @@ public class Demo {
          *
          *
          */
-        File file = new File("/Users/njy/Documents/zkr/新数据中台/快速报表sql/test1.sql");
+        File file = new File("/Users/njy/Documents/zkr/新数据中台/快速报表sql/个险营销员销售团险业务清单.sql");
 
 
         // 读取sql文件中的sql
