@@ -28,7 +28,7 @@ public class Demo {
          *
          *
          */
-        File file = new File("/Users/njy/Documents/zkr/新数据中台/快速报表sql/个险营销员销售团险业务清单.sql");
+        File file = new File("D:\\Development\\SvnProjects\\审计中台\\03.需要分析\\01.参考资料\\03.数据采集原始脚本汇总-审计\\清单\\财务-科目汇总表-财务.sql");
 
 
         // 读取sql文件中的sql

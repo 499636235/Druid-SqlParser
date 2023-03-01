@@ -10,11 +10,12 @@ import com.alibaba.druid.sql.parser.Token;
 import com.alibaba.druid.stat.TableStat;
 import com.alibaba.druid.util.JdbcConstants;
 import org.springframework.util.CollectionUtils;
+
 import java.io.*;
 import java.util.*;
 
 /**
- * Created by Lululululu on 2021-05-10.
+ * 取出Oracle/Hive SQL 中涉及到的所有源表字段
  */
 public class Test {
 
@@ -27,43 +28,55 @@ public class Test {
          *
          *
          */
-        File file = new File("C:\\Users\\Lululululu\\Desktop\\sql");
+        File file = new File("input\\");
 
         // map的key为表名，value为该表使用到的所有列名
         Map<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
         // 数据库类型 (Oracle)
         String dbType = JdbcConstants.ORACLE;
 
-        File[] files =  file.listFiles();
-        for(int i=0;i<files.length;i++){
+        File[] files = file.listFiles();
+        for (int i = 0; i < files.length; i++) {
             // 读取sql文件中的sql
             StringBuilder sql = new StringBuilder("");
             BufferedReader reader = null;
             reader = new BufferedReader(new InputStreamReader(new FileInputStream(files[i]), "GB2312"));
             String tempStr;
             while ((tempStr = reader.readLine()) != null) {
-                sql.append(tempStr+"\n");
+                sql.append(tempStr + "\n");
             }
             reader.close();
             System.out.println(files[i].getName());
             // 获取sql语句中所有表和字段
-            getTableAndColumnBySql(sql.toString(), dbType,map);
+            getTableAndColumnBySql(sql.toString(), dbType, map);
         }
-
 
 
         // 输出map所有键值对 格式根据需要自己调整
-        Set set = map.keySet();
-        File f=new File("C:\\Users\\Lululululu\\Desktop\\模型.txt");
-        if(f.exists()){
+        Set<String> set = map.keySet();
+        File dir = new File("output");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File f = new File("output\\模型.txt");
+        if (f.exists()) {
             f.delete();
         }
-        FileOutputStream fos1=new FileOutputStream(f);
-        OutputStreamWriter dos1=new OutputStreamWriter(fos1);
-        for (Object o : set) {
-            dos1.write(o + ":" + map.get(o)+"\n");
+        FileOutputStream fos1 = new FileOutputStream(f);
+        OutputStreamWriter dos1 = new OutputStreamWriter(fos1);
+        for (String o : set) {
+            for (String s : map.get(o)) {
+                if (s.equals("*")) {
+                    throw new Exception("***");
+                }
+                String oo = o;
+//                oo = o.replaceAll("SOOCHOW_DATA\\.ODS_", "");
+//                oo = oo.replaceFirst("_", "\\.");
+                dos1.write(oo + "." + s + "\n");
+            }
         }
         dos1.close();
+        fos1.close();
         System.out.println();
 
         return;
@@ -92,10 +105,10 @@ public class Test {
 
             // visitor.getColumns() 即是所有用到的表和字段
             for (TableStat.Column c : visitor.getColumns()) {
-                if(c.getTable().toUpperCase().equals("UNKNOWN")){
+                if (c.getTable().toUpperCase().equals("UNKNOWN")) {
                     System.out.println("aaa");
                 }
-                if(c.getName().toUpperCase().equals("产品代码")){
+                if (c.getName().toUpperCase().equals("产品代码")) {
                     System.out.println("BBB");
                 }
                 // 没有添加的表，新建list
@@ -106,7 +119,7 @@ public class Test {
                 } else {
                     // 添加过的表，直接add
                     ArrayList<String> colList2 = map.get(c.getTable().toUpperCase());
-                    if(colList2.contains((c.getName().toUpperCase()))){
+                    if (colList2.contains((c.getName().toUpperCase()))) {
                         continue;
                     }
                     colList2.add(c.getName().toUpperCase());

@@ -18,7 +18,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created by Lululululu on 2021-05-10.
+ * 取出HiveSQL中每个字段的源表字段
  */
 public class TestHive {
 
@@ -31,7 +31,7 @@ public class TestHive {
          *
          *
          */
-        File file = new File("C:\\Users\\NJY_SHIP\\Downloads\\input\\");
+        File file = new File("input\\");
 
         // map的key为表名，value为该表使用到的所有列名
         Map<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
@@ -56,18 +56,18 @@ public class TestHive {
 
 
         // 输出map所有键值对 格式根据需要自己调整
-        Set set = map.keySet();
-        File f = new File("C:\\Users\\NJY_SHIP\\Downloads\\output\\模型.txt");
-        if (f.exists()) {
-            f.delete();
-        }
-        FileOutputStream fos1 = new FileOutputStream(f);
-        OutputStreamWriter dos1 = new OutputStreamWriter(fos1);
-        for (Object o : set) {
-            dos1.write(o + ":" + map.get(o) + "\n");
-        }
-        dos1.close();
-        System.out.println();
+//        Set set = map.keySet();
+//        File f = new File("C:\\Users\\NJY_SHIP\\Downloads\\output\\模型.txt");
+//        if (f.exists()) {
+//            f.delete();
+//        }
+//        FileOutputStream fos1 = new FileOutputStream(f);
+//        OutputStreamWriter dos1 = new OutputStreamWriter(fos1);
+//        for (Object o : set) {
+//            dos1.write(o + ":" + map.get(o) + "\n");
+//        }
+//        dos1.close();
+//        System.out.println();
 
         return;
     }
@@ -97,22 +97,67 @@ public class TestHive {
             SQLWithSubqueryClause sqlWithSubqueryClause = select.getWithSubQuery();
             SQLSelectQueryBlock queryBlock = select.getQueryBlock();
             List<SQLSelectItem> sqlSelectItems = queryBlock.getSelectList();
+
+
+            File dir = new File("output");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File f = new File("output\\1.txt");
+            if (f.exists()) {
+                f.delete();
+            }
+            FileOutputStream fos1 = new FileOutputStream(f);
+            OutputStreamWriter dos1 = new OutputStreamWriter(fos1);
+
+            StringBuilder sb = new StringBuilder();
+
             for (SQLSelectItem sqlSelectItem : sqlSelectItems) {
                 SQLExpr sqlExpr = sqlSelectItem.getExpr();
-                System.out.println(sqlSelectItem.getAlias());
+
+
+                if (sqlSelectItem.getAlias() != null) {
+//                    System.out.print(sqlSelectItem.getAlias());
+                    sb.append(sqlSelectItem.getAlias());
+                } else {
+                    SQLExpr expr = sqlSelectItem.getExpr();
+                    if (expr instanceof SQLPropertyExpr) {
+//                        System.out.print(((SQLPropertyExpr) expr).getName());
+                        sb.append(((SQLPropertyExpr) expr).getName());
+                    } else if (expr instanceof SQLIdentifierExpr) {
+//                        System.out.print(((SQLIdentifierExpr) expr).getName());
+                        sb.append(((SQLIdentifierExpr) expr).getName());
+
+                    }
+                }
 
 
                 List<String> usedCol = new ArrayList<>(getColInfo(sqlExpr));
 
 
                 Set<String> usedColSet = new HashSet<String>(usedCol);
-//                for (String usedCol1 : usedColSet) {
-//                    System.out.print(usedCol1);
-//                }
-                System.out.println(usedColSet);
-                System.out.println();
+
+                if (usedColSet.size() == 1) {
+                    for (String usedCol2 : usedColSet) {
+
+                        usedCol2 = usedCol2.replaceAll("soochow_data\\.ods_", "");
+                        usedCol2 = usedCol2.replaceFirst("_", "\\.");
+
+//                        System.out.print("\t\t\t\t\t\t" + usedCol2);
+                        sb.append("\t\t\t\t\t\t" + usedCol2);
+                    }
+                }
+
+//                System.out.println(usedColSet);
+
+//                System.out.println();
+                sb.append("\n");
 
             }
+
+            dos1.write(String.valueOf(sb));
+            dos1.close();
+            fos1.close();
 
         }
     }
@@ -128,6 +173,20 @@ public class TestHive {
         } else if (sqlExpr instanceof SQLBinaryExpr) {
             /* 真假 */
 
+        } else if (sqlExpr instanceof SQLInListExpr) {
+            /* in ('') */
+            SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlExpr;
+            subUsedCol.addAll(getColInfo(sqlInListExpr.getExpr()));
+            for (SQLExpr sqlExpr2 : sqlInListExpr.getTargetList()) {
+                subUsedCol.addAll(getColInfo(sqlExpr2));
+            }
+        } else if (sqlExpr instanceof SQLBinaryOpExpr) {
+            /* 真假判断 */
+            SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) sqlExpr;
+            // 左边
+            subUsedCol.addAll(getColInfo(sqlBinaryOpExpr.getLeft()));
+            // 右边
+            subUsedCol.addAll(getColInfo(sqlBinaryOpExpr.getRight()));
         } else if (sqlExpr instanceof SQLCaseExpr) {
             /* 控制流 CASE */
             SQLCaseExpr sqlCaseExpr = (SQLCaseExpr) sqlExpr;
@@ -144,18 +203,11 @@ public class TestHive {
                     subUsedCol.addAll(getColInfo(item.getValueExpr()));
                 }
             }
-        } else if (sqlExpr instanceof SQLBinaryOpExpr) {
-            /* 真假判断 */
-            SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) sqlExpr;
-            // 左边
-            subUsedCol.addAll(getColInfo(sqlBinaryOpExpr.getLeft()));
-            // 右边
-            subUsedCol.addAll(getColInfo(sqlBinaryOpExpr.getRight()));
         } else if (sqlExpr instanceof SQLMethodInvokeExpr) {
             /* 方法 function */
             SQLMethodInvokeExpr sqlMethodInvokeExpr = (SQLMethodInvokeExpr) sqlExpr;
             String functionName = sqlMethodInvokeExpr.getMethodName().toLowerCase();
-            List<String> functionList = Arrays.asList("if", "substr", "from_unixtime", "unix_timestamp", "");
+            List<String> functionList = Arrays.asList("if", "substr", "from_unixtime", "unix_timestamp", "nvl", "");
             if (!functionList.contains(functionName)) {
                 throw new Exception("有未适配的表达式出现了！！！！！！");
             }

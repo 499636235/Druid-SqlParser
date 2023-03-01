@@ -1,0 +1,10 @@
+laagentcode						cmsp.laagent.agentcode
+branchtype						with子查询暂时不支持
+zygrantdate						cmsp.laqualification.grantdate
+dlrqualifno						cmsp.laqualification.qualifno
+needapproveflag
+agentgradename
+OGGACTION
+OGGDATE
+PushDate
+PushTime
