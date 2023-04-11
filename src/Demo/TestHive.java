@@ -162,6 +162,21 @@ public class TestHive {
         }
     }
 
+    /**
+     * SQLIdentifierExpr：用于表示 SQL 中的标识符，例如表名、列名等。
+     * SQLPropertyExpr：用于表示 SQL 中的属性访问，例如表达式中的表别名和列名的结合。
+     * SQLAggregateExpr：用于表示 SQL 中的聚合函数，例如 SUM、AVG、MAX、MIN 等。
+     * SQLLiteralExpr：用于表示 SQL 中的字面量，例如字符串、数字、日期等。
+     * SQLVariantRefExpr：用于表示 SQL 中的占位符，例如 JDBC 中的参数占位符。
+     * SQLBinaryOpExpr：用于表示 SQL 中的二元操作符，例如加法、减法、乘法、除法等。
+     * SQLUnaryExpr：用于表示 SQL 中的一元操作符，例如取负数、逻辑非等。
+     * SQLCaseExpr：用于表示 SQL 中的 CASE 表达式。
+     * SQLInListExpr：用于表示 SQL 中的 IN 子句。
+     * SQLExistsExpr：用于表示 SQL 中的 EXISTS 子查询。
+     *
+     * @param sqlExpr
+     * @return
+     */
     private static List<String> getColInfo(SQLExpr sqlExpr) throws Exception {
         List<String> subUsedCol = new ArrayList<>();
         if (sqlExpr instanceof SQLCharExpr) {
@@ -173,6 +188,9 @@ public class TestHive {
         } else if (sqlExpr instanceof SQLBinaryExpr) {
             /* 真假 */
 
+        } else if (sqlExpr instanceof SQLLiteralExpr) {
+            /* 字面量，例如字符串、数字、日期等 */
+
         } else if (sqlExpr instanceof SQLInListExpr) {
             /* in ('') */
             SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlExpr;
@@ -181,14 +199,14 @@ public class TestHive {
                 subUsedCol.addAll(getColInfo(sqlExpr2));
             }
         } else if (sqlExpr instanceof SQLBinaryOpExpr) {
-            /* 真假判断 */
+            /* 二元操作符，例如加法、减法、乘法、除法等 */
             SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) sqlExpr;
             // 左边
             subUsedCol.addAll(getColInfo(sqlBinaryOpExpr.getLeft()));
             // 右边
             subUsedCol.addAll(getColInfo(sqlBinaryOpExpr.getRight()));
         } else if (sqlExpr instanceof SQLCaseExpr) {
-            /* 控制流 CASE */
+            /* 控制流 CASE 表达式 */
             SQLCaseExpr sqlCaseExpr = (SQLCaseExpr) sqlExpr;
             if (sqlCaseExpr.getValueExpr() != null) {
                 subUsedCol.addAll(getColInfo(sqlCaseExpr.getValueExpr()));
@@ -215,7 +233,7 @@ public class TestHive {
                 subUsedCol.addAll(getColInfo(sqlExpr1));
             }
         } else if (sqlExpr instanceof SQLIdentifierExpr) {
-            /* 标识符 */
+            /* 标识符，例如表名、列名等 */
             SQLIdentifierExpr sqlIdentifierExpr = (SQLIdentifierExpr) sqlExpr;
             if (sqlIdentifierExpr.getResolvedOwnerObject() != null) {
                 SQLObject resolvedOwnerObject = sqlIdentifierExpr.getResolvedOwnerObject();
@@ -224,7 +242,7 @@ public class TestHive {
                 throw new Exception("有未适配的表达式出现了！！！！！！");
             }
         } else if (sqlExpr instanceof SQLPropertyExpr) {
-            /* 属性 */
+            /* 属性访问，例如表达式中的表别名和列名的结合 */
             SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlExpr;
 
             if (sqlPropertyExpr.getResolvedOwnerObject() != null) {
@@ -237,6 +255,9 @@ public class TestHive {
                     throw new Exception("有未适配的表达式出现了！！！！！！");
                 }
             }
+        } else if (sqlExpr instanceof SQLQueryExpr) {
+            /* 子查询 */
+
         } else {
             throw new Exception("有未适配的表达式出现了！！！！！！");
         }
